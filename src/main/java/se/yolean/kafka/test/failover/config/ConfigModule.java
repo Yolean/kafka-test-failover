@@ -8,7 +8,6 @@ import com.google.inject.name.Names;
 public class ConfigModule extends AbstractModule {
 
 	public static final String ENV_BOOTSTRAP = "BOOTSTRAP";
-	// we could get these from kubectl get nodes
 	public static final String DEFAULT_BOOTSTRAP_SERVERS = "192.168.99.100:32400,192.168.99.100:32401,192.168.99.100:32402";
 
 	public static final String ENV_TOPICS = "TOPIC";
@@ -23,6 +22,9 @@ public class ConfigModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
+		bind(Integer.class).annotatedWith(Names.named("config:messagesMax")).toInstance(Integer.MAX_VALUE);
+		bind(Integer.class).annotatedWith(Names.named("config:messageIntervalMs")).toInstance(1000);
+
 		String bs = getConf(ENV_BOOTSTRAP, DEFAULT_BOOTSTRAP_SERVERS);
 		bind(String.class).annotatedWith(Names.named("config:bootstrap")).toInstance(bs);
 

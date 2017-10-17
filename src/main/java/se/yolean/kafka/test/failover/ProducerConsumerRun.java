@@ -1,6 +1,8 @@
 package se.yolean.kafka.test.failover;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -26,6 +28,14 @@ public class ProducerConsumerRun {
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 
 	@Inject
+	@Named("config:messagesMax")
+	private int messagesMax;
+
+	@Inject
+	@Named("config:messageIntervalMs")
+	private int messageIntervalMs;
+
+	@Inject
 	@Named("producerDefaults")
 	private Properties producerProps;
 
@@ -37,31 +47,42 @@ public class ProducerConsumerRun {
 	@Named("config:topic")
 	private String topic;
 
-	public void start() {
-		log.info("Starting", "topic", topic, "bootstrap", producerProps.getProperty("bootstrap.servers"));
+	private TestMessageLog messageLog = new TestMessageLogImpl();
+
+	/**
+	 * @param runId
+	 *            Unique, in case runs share a topic
+	 * @throws AssertionError
+	 *             if some consistency assertions fails
+	 */
+	public void start(RunId runId) throws AssertionError {
+		log.info("Starting", "runId", runId, "topic", topic, "bootstrap",
+				producerProps.getProperty("bootstrap.servers"));
 
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
 		consumer.subscribe(Arrays.asList(topic));
 
 		Producer<String, String> producer = new KafkaProducer<>(producerProps);
-		for (int i = 0; i < 10; i++) {
-			log.debug("Producing", "message", i);
-			ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, Integer.toString(i),
-					"msg" + Integer.toString(i));
+
+		for (int i = 0; i < messagesMax; i++) {
+			ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
+			log.debug("Producer send", "timestamp", record.timestamp());
 			Future<RecordMetadata> producing = producer.send(record);
-			waitForAck(producing);
+			RecordMetadata metadata = waitForAck(producing);
+			messageLog.onProducerAckReceived(metadata);
 
 			ConsumerRecords<String, String> consumed = consumer.poll(100);
 			for (ConsumerRecord<String, String> r : consumed) {
 				log.info("consumed", "offset", r.offset(), "timestamp", r.timestamp(), "key", r.key(), "value",
 						r.value());
+				messageLog.onConsumed(r);
 			}
 		}
 		producer.close();
 		consumer.close();
 	}
 
-	private void waitForAck(Future<RecordMetadata> producing) {
+	private RecordMetadata waitForAck(Future<RecordMetadata> producing) {
 		int timeout = 100;
 		// block while sending
 		final RecordMetadata metadata;
@@ -80,7 +101,10 @@ public class ProducerConsumerRun {
 		if (metadata != null) {
 			log.info("ack", "offset", metadata.offset(), "partition", metadata.partition(), "keySize",
 					metadata.serializedKeySize(), "valueSize", metadata.serializedValueSize());
+		} else {
+			throw new RuntimeException("Failed to get ack for message " + producing);
 		}
+		return metadata;
 	}
 
 }
