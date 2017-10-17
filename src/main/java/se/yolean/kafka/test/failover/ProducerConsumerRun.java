@@ -1,8 +1,6 @@
 package se.yolean.kafka.test.failover;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -52,10 +50,11 @@ public class ProducerConsumerRun {
 	/**
 	 * @param runId
 	 *            Unique, in case runs share a topic
-	 * @throws AssertionError
-	 *             if some consistency assertions fails
+	 * @throws ConsistencyFatalError
+	 *             On consistencies that are too odd/big to be represented by
+	 *             metrics
 	 */
-	public void start(RunId runId) throws AssertionError {
+	public void start(RunId runId) throws ConsistencyFatalError {
 		log.info("Starting", "runId", runId, "topic", topic, "bootstrap",
 				producerProps.getProperty("bootstrap.servers"));
 
@@ -66,9 +65,11 @@ public class ProducerConsumerRun {
 
 		for (int i = 0; i < messagesMax; i++) {
 			ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
-			log.debug("Producer send", "timestamp", record.timestamp());
+			log.debug("Producer send", "timestamp", record.key());
 			Future<RecordMetadata> producing = producer.send(record);
 			RecordMetadata metadata = waitForAck(producing);
+			log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
+					metadata.offset(), "timestamp", metadata.timestamp());
 			messageLog.onProducerAckReceived(metadata);
 
 			ConsumerRecords<String, String> consumed = consumer.poll(100);

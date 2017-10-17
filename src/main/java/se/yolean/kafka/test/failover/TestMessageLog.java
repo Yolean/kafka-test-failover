@@ -5,21 +5,26 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 /**
- * Doesn't communicate with Kafka, but understands the API to constantly verify consistency.
+ * Doesn't communicate with Kafka, but understands the API enough to verify
+ * message consistency.
  */
 public interface TestMessageLog extends Iterable<TestMessage> {
 
-	//TestMessage createNext(RunId runId, int i);
+	// TestMessage createNext(RunId runId, int i);
 
-	ProducerRecord<String, String> createNext(RunId runId, int i, String topic);	
-	
+	ProducerRecord<String, String> createNext(RunId runId, int i, String topic);
+
 	/**
-	 * @throws AssertionError if some consistency assertions fails
+	 * @throws ConsistencyFatalError
+	 *             On consistencies that are too odd/big to be represented by
+	 *             metrics
 	 */
 	void onProducerAckReceived(RecordMetadata recordMetadata);
 
 	/**
-	 * @throws AssertionError if some consistency assertions fails
+	 * @throws ConsistencyFatalError
+	 *             On consistencies that are too odd/big to be represented by
+	 *             metrics
 	 */
 	void onConsumed(ConsumerRecord<String, String> r);
 

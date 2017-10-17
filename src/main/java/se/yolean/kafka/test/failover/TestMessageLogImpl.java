@@ -25,20 +25,19 @@ public class TestMessageLogImpl
 
 	@Override
 	public ProducerRecord<String, String> createNext(RunId runId, int i, String topic) {
-		// TODO Auto-generated method stub
-		return null;
+		TestMessage msg = createNext(runId, i);
+		this.add(msg);
+		return new ProducerRecord<String, String>(topic, msg.getKey(), msg.getMessage());
 	}
 
 	@Override
-	public void onProducerAckReceived(RecordMetadata recordMetadata) {
-		// TODO Auto-generated method stub
-		
+	public void onProducerAckReceived(RecordMetadata metadata) {
+		log.debug("TODO verify produced");
 	}
 
 	@Override
 	public void onConsumed(ConsumerRecord<String, String> r) {
-		// TODO Auto-generated method stub
-		
+		log.debug("TODO verify consumed");
 	}
 	
 }
