@@ -12,7 +12,7 @@ public class ConfigModule extends AbstractModule {
 	public static final String DEFAULT_BOOTSTRAP_SERVERS = "192.168.99.100:32400,192.168.99.100:32401,192.168.99.100:32402";
 
 	public static final String ENV_TOPICS = "TOPIC";
-	public static final String DEFAULT_TOPICS = "test-basic-produce-consume";
+	public static final String DEFAULT_TOPICS = "test-basic-with-kafkacat";
 
 	public String getConf(String envName, String fallback) {
 		String conf = System.getenv(envName);

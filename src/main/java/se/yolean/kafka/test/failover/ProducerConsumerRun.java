@@ -1,5 +1,6 @@
 package se.yolean.kafka.test.failover;
 
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -9,6 +10,9 @@ import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -36,14 +40,25 @@ public class ProducerConsumerRun {
 	public void start() {
 		log.info("Starting", "topic", topic, "bootstrap", producerProps.getProperty("bootstrap.servers"));
 
+		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+		consumer.subscribe(Arrays.asList(topic));
+
 		Producer<String, String> producer = new KafkaProducer<>(producerProps);
 		for (int i = 0; i < 10; i++) {
-			System.out.println("Producing " + i);
-			Future<RecordMetadata> producing = producer.send(new ProducerRecord<String, String>(
-					"test-basic-with-kafkacat", Integer.toString(i), "msg" + Integer.toString(i)));
+			log.debug("Producing", "message", i);
+			ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, Integer.toString(i),
+					"msg" + Integer.toString(i));
+			Future<RecordMetadata> producing = producer.send(record);
 			waitForAck(producing);
+
+			ConsumerRecords<String, String> consumed = consumer.poll(100);
+			for (ConsumerRecord<String, String> r : consumed) {
+				log.info("consumed", "offset", r.offset(), "timestamp", r.timestamp(), "key", r.key(), "value",
+						r.value());
+			}
 		}
 		producer.close();
+		consumer.close();
 	}
 
 	private void waitForAck(Future<RecordMetadata> producing) {
