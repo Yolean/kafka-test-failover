@@ -21,6 +21,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import com.github.structlog4j.ILogger;
 import com.github.structlog4j.SLoggerFactory;
 
+import io.prometheus.client.Histogram;
+import se.yolean.kafka.test.failover.metrics.Metrics;
+
 public class ProducerConsumerRun {
 
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
@@ -45,7 +48,11 @@ public class ProducerConsumerRun {
 	@Named("config:topic")
 	private String topic;
 
-	private TestMessageLog messageLog = new TestMessageLogImpl();
+	@Inject
+	private TestMessageLog messageLog;
+
+	@Inject
+	private Metrics metrics;
 
 	/**
 	 * @param runId
@@ -89,19 +96,24 @@ public class ProducerConsumerRun {
 			}
 
 			t = System.currentTimeMillis();
-			ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
-			log.debug("Producer send", "key", record.key(), "afterWait", wait);
-			Future<RecordMetadata> producing = producer.send(record);
-			RecordMetadata metadata = waitForAck(producing);
-			log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
-					metadata.offset(), "timestamp", metadata.timestamp());
-			messageLog.onProducerAckReceived(metadata);
+			Histogram.Timer iterationTimer = metrics.iterationLatency.startTimer();
+			try {
+				ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
+				log.debug("Producer send", "key", record.key(), "afterWait", wait);
+				Future<RecordMetadata> producing = producer.send(record);
+				RecordMetadata metadata = waitForAck(producing);
+				log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
+						metadata.offset(), "timestamp", metadata.timestamp());
+				messageLog.onProducerAckReceived(metadata);
 
-			ConsumerRecords<String, String> consumed = consumer.poll(100);
-			for (ConsumerRecord<String, String> r : consumed) {
-				log.info("consumed", "offset", r.offset(), "timestamp", r.timestamp(), "key", r.key(), "value",
-						r.value());
-				messageLog.onConsumed(r);
+				ConsumerRecords<String, String> consumed = consumer.poll(100);
+				for (ConsumerRecord<String, String> r : consumed) {
+					log.info("consumed", "offset", r.offset(), "timestamp", r.timestamp(), "key", r.key(), "value",
+							r.value());
+					messageLog.onConsumed(r);
+				}
+			} finally {
+				iterationTimer.observeDuration();
 			}
 		}
 	}

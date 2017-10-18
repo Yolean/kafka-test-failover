@@ -40,7 +40,6 @@ public class ConfigModule extends AbstractModule {
 				.toProvider(ProducerDefaultPropsProvider.class);
 		bind(Properties.class).annotatedWith(Names.named("consumerDefaults"))
 				.toProvider(ConsumerDefaultPropsProvider.class);
-
 	}
 
 }
