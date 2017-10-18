@@ -12,7 +12,6 @@ import com.github.structlog4j.ILogger;
 import com.github.structlog4j.SLoggerFactory;
 
 import se.yolean.kafka.test.failover.RunId;
-import se.yolean.kafka.test.failover.TestMessage;
 import se.yolean.kafka.test.failover.TestMessageLog;
 
 public class TestMessageLogImpl

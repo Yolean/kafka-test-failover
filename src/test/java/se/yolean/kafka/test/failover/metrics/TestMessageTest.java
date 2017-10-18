@@ -1,4 +1,4 @@
-package se.yolean.kafka.test.failover;
+package se.yolean.kafka.test.failover.metrics;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -6,6 +6,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.Date;
 
 import org.junit.Test;
+
+import se.yolean.kafka.test.failover.RunId;
+import se.yolean.kafka.test.failover.metrics.TestMessage;
 
 public class TestMessageTest {
 

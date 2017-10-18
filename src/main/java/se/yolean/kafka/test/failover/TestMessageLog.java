@@ -4,6 +4,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import se.yolean.kafka.test.failover.metrics.TestMessage;
+
 /**
  * Doesn't communicate with Kafka, but understands the API enough to verify
  * message consistency.

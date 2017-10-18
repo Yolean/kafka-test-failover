@@ -1,9 +1,11 @@
-package se.yolean.kafka.test.failover;
+package se.yolean.kafka.test.failover.metrics;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import se.yolean.kafka.test.failover.RunId;
 
 /**
  * Facilitates consistency checks, even if there are multiple concurrent runs.
@@ -21,11 +23,11 @@ public class TestMessage {
 	private int i;
 	private Date created;
 
-	public TestMessage(RunId runId, int i) {
+	TestMessage(RunId runId, int i) {
 		this(new Date(), runId, i);
 	}
 	
-	TestMessage(Date created, RunId runId, int i) {
+	protected TestMessage(Date created, RunId runId, int i) {
 		this.created = new Date();
 		this.runId = runId;
 		this.i = i;
