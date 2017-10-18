@@ -13,7 +13,7 @@ public class ConsumerDefaultPropsProvider implements Provider<Properties> {
 	@Inject
 	public ConsumerDefaultPropsProvider(@Named("config:bootstrap") String bootstrap) {
 		this.bootstrap = bootstrap;
-	}	
+	}
 	
 	@Override
 	public Properties get() {

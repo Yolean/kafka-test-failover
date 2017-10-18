@@ -7,8 +7,7 @@ import com.google.inject.name.Names;
 
 public class ConfigModule extends AbstractModule {
 
-	//private static final int DEFAULT_MESSAGES_MAX = Integer.MAX_VALUE;
-	private static final int DEFAULT_MESSAGES_MAX = 5;
+	private static final int DEFAULT_MESSAGES_MAX = 999999999;
 
 	public static final int DEFAULT_INTERVAL_MS = 1000;
 	

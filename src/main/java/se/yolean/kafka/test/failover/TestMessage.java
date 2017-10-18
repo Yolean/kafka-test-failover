@@ -32,7 +32,7 @@ public class TestMessage {
 	}
 	
 	public String getKey() {
-		return runId.toString() + i;
+		return runId.toString() + String.format("%09d", i);
 	}
 
 	@Override
