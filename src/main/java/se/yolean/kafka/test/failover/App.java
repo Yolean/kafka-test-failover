@@ -1,12 +1,11 @@
 package se.yolean.kafka.test.failover;
 
-import org.apache.commons.text.RandomStringGenerator;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import se.yolean.kafka.test.failover.config.AppModule;
 import se.yolean.kafka.test.failover.config.ConfigModule;
+import se.yolean.kafka.test.failover.config.MetricsModule;
 
 public class App {
 
@@ -15,7 +14,7 @@ public class App {
 	}
 
 	public static void main(String[] args) {
-		Injector injector = Guice.createInjector(new ConfigModule(), new AppModule());
+		Injector injector = Guice.createInjector(new ConfigModule(), new MetricsModule(), new AppModule());
 
 		RunId runId = new RunId();
 

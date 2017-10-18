@@ -1,7 +1,6 @@
 package se.yolean.kafka.test.failover;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -70,8 +69,10 @@ public class ProducerConsumerRun {
 		}
 	}
 
-	private void start(RunId runId, KafkaConsumer<String, String> consumer, Producer<String, String> producer) {
-		consumer.subscribe(Arrays.asList(topic));
+	void start(RunId runId, KafkaConsumer<String, String> consumer, Producer<String, String> producer) {
+
+		AlwaysSeekToEndListener<String, String> rebalanceListner = new AlwaysSeekToEndListener<>(consumer);
+		consumer.subscribe(Arrays.asList(topic), rebalanceListner);
 
 		long t = System.currentTimeMillis();
 		for (int i = 0; i < messagesMax; i++) {
@@ -86,6 +87,7 @@ public class ProducerConsumerRun {
 			} else {
 				messageLog.onIntervalInsufficient(i - 1, durationPrevious, messageIntervalMs);
 			}
+
 			t = System.currentTimeMillis();
 			ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
 			log.debug("Producer send", "key", record.key(), "afterWait", wait);
