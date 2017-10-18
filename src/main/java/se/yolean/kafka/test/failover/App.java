@@ -3,6 +3,7 @@ package se.yolean.kafka.test.failover;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import io.prometheus.client.exporter.HTTPServer;
 import se.yolean.kafka.test.failover.config.AppModule;
 import se.yolean.kafka.test.failover.config.ConfigModule;
 import se.yolean.kafka.test.failover.config.MetricsModule;
@@ -19,7 +20,14 @@ public class App {
 		RunId runId = new RunId();
 
 		ProducerConsumerRun run = injector.getInstance(ProducerConsumerRun.class);
-		run.start(runId);
+		try {
+			run.start(runId);
+		} finally {
+			HTTPServer server = injector.getInstance(HTTPServer.class);
+			if (server != null) {
+				server.stop();
+			}
+		}
 	}
 
 }

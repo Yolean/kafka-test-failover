@@ -63,5 +63,9 @@ public class TestMessage {
 		long c = Long.parseLong(created);
 		return new Date(c);
 	}
+
+	static boolean isSameRun(RunId runId, String key) {
+		return key != null && key.startsWith(runId.toString());
+	}
 	
 }

@@ -11,8 +11,6 @@ public class AppModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		bind(ProducerConsumerRun.class);
-
-		bind(TestMessageLog.class).to(TestMessageLogImpl.class);
 	}
 
 }

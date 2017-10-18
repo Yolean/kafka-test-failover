@@ -24,6 +24,7 @@ import com.github.structlog4j.SLoggerFactory;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 import se.yolean.kafka.test.failover.analytics.TestMessageLog;
+import se.yolean.kafka.test.failover.analytics.TestMessageLogImpl;
 
 public class ProducerConsumerRun {
 
@@ -49,9 +50,6 @@ public class ProducerConsumerRun {
 	@Named("config:topic")
 	private String topic;
 
-	@Inject
-	private TestMessageLog messageLog;
-
 	public final Histogram iterationLatency = Histogram.build().name("iteration_latency_ms")
 			.help("Time taken for each test loop, excluding initial wait").register();
 
@@ -69,18 +67,20 @@ public class ProducerConsumerRun {
 		log.info("Starting", "runId", runId, "topic", topic, "bootstrap",
 				producerProps.getProperty("bootstrap.servers"));
 
+		TestMessageLog messageLog = new TestMessageLogImpl(runId);
+		
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
 		Producer<String, String> producer = new KafkaProducer<>(producerProps);
-
+		
 		try {
-			start(runId, consumer, producer);
+			start(messageLog, consumer, producer);
 		} finally {
 			producer.close();
 			consumer.close();
 		}
 	}
 
-	void start(RunId runId, KafkaConsumer<String, String> consumer, Producer<String, String> producer) {
+	void start(TestMessageLog messageLog, KafkaConsumer<String, String> consumer, Producer<String, String> producer) {
 
 		AlwaysSeekToEndListener<String, String> rebalanceListner = new AlwaysSeekToEndListener<>(consumer);
 		consumer.subscribe(Arrays.asList(topic), rebalanceListner);
@@ -103,12 +103,13 @@ public class ProducerConsumerRun {
 			t = System.currentTimeMillis();
 			Histogram.Timer iterationTimer = iterationLatency.startTimer();
 			try {
-				ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
+				ProducerRecord<String, String> record = messageLog.createNext(i, topic);
 				log.debug("Producer send", "key", record.key(), "afterWait", wait);
 				Future<RecordMetadata> producing = producer.send(record);
 				RecordMetadata metadata = waitForAck(producing);
 				log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
-						metadata.offset(), "timestamp", metadata.timestamp());
+						metadata.offset(), "timestamp", metadata.timestamp(), metadata, "keySize",
+						metadata.serializedKeySize(), "valueSize", metadata.serializedValueSize());
 				messageLog.onProducerAckReceived(metadata);
 
 				ConsumerRecords<String, String> consumed = consumer.poll(100);
@@ -131,19 +132,16 @@ public class ProducerConsumerRun {
 			metadata = producing.get(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			log.error("Got interrupted (probably not by Kafka) while waiting for ack", e);
-			throw new AssertionError(e);
+			throw new ConsistencyFatalError(e);
 		} catch (ExecutionException e) {
 			log.error("Something must have gone wrong while producing", e);
-			throw new AssertionError(e);
+			throw new ConsistencyFatalError(e);
 		} catch (TimeoutException e) {
 			log.error("Failed to get an ack within", "milliseconds", timeout, e);
-			throw new AssertionError(e);
+			throw new ConsistencyFatalError(e);
 		}
-		if (metadata != null) {
-			log.info("ack", "offset", metadata.offset(), "partition", metadata.partition(), "keySize",
-					metadata.serializedKeySize(), "valueSize", metadata.serializedValueSize());
-		} else {
-			throw new RuntimeException("Failed to get ack for message " + producing);
+		if (metadata == null) {
+			throw new RuntimeException("Failed with reason unkown to get ack for message " + producing);
 		}
 		return metadata;
 	}

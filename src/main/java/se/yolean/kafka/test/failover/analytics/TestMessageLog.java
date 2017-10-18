@@ -5,7 +5,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import se.yolean.kafka.test.failover.ConsistencyFatalError;
-import se.yolean.kafka.test.failover.RunId;
 
 /**
  * Doesn't communicate with Kafka, but understands the API enough to verify
@@ -13,9 +12,9 @@ import se.yolean.kafka.test.failover.RunId;
  */
 public interface TestMessageLog extends Iterable<TestMessage> {
 
-	// TestMessage createNext(RunId runId, int i);
+	// TestMessage createNext(int i);
 
-	ProducerRecord<String, String> createNext(RunId runId, int i, String topic);
+	ProducerRecord<String, String> createNext(int i, String topic);
 
 	/**
 	 * @throws ConsistencyFatalError
