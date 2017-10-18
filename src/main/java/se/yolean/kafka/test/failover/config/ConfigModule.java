@@ -7,6 +7,11 @@ import com.google.inject.name.Names;
 
 public class ConfigModule extends AbstractModule {
 
+	//private static final int DEFAULT_MESSAGES_MAX = Integer.MAX_VALUE;
+	private static final int DEFAULT_MESSAGES_MAX = 5;
+
+	public static final int DEFAULT_INTERVAL_MS = 1000;
+	
 	public static final String ENV_BOOTSTRAP = "BOOTSTRAP";
 	public static final String DEFAULT_BOOTSTRAP_SERVERS = "192.168.99.100:32400,192.168.99.100:32401,192.168.99.100:32402";
 
@@ -22,8 +27,8 @@ public class ConfigModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
-		bind(Integer.class).annotatedWith(Names.named("config:messagesMax")).toInstance(Integer.MAX_VALUE);
-		bind(Integer.class).annotatedWith(Names.named("config:messageIntervalMs")).toInstance(1000);
+		bind(Integer.class).annotatedWith(Names.named("config:messagesMax")).toInstance(DEFAULT_MESSAGES_MAX);
+		bind(Integer.class).annotatedWith(Names.named("config:messageIntervalMs")).toInstance(DEFAULT_INTERVAL_MS);
 
 		String bs = getConf(ENV_BOOTSTRAP, DEFAULT_BOOTSTRAP_SERVERS);
 		bind(String.class).annotatedWith(Names.named("config:bootstrap")).toInstance(bs);

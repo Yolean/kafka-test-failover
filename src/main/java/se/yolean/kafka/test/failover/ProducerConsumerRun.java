@@ -1,6 +1,7 @@
 package se.yolean.kafka.test.failover;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -59,13 +60,35 @@ public class ProducerConsumerRun {
 				producerProps.getProperty("bootstrap.servers"));
 
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
-		consumer.subscribe(Arrays.asList(topic));
-
 		Producer<String, String> producer = new KafkaProducer<>(producerProps);
 
+		try {
+			start(runId, consumer, producer);
+		} finally {
+			producer.close();
+			consumer.close();
+		}
+	}
+
+	private void start(RunId runId, KafkaConsumer<String, String> consumer, Producer<String, String> producer) {
+		consumer.subscribe(Arrays.asList(topic));
+
+		long t = System.currentTimeMillis();
 		for (int i = 0; i < messagesMax; i++) {
+			long durationPrevious = System.currentTimeMillis() - t;
+			long wait = messageIntervalMs - durationPrevious;
+			if (wait > 0) {
+				try {
+					Thread.sleep(wait);
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Got aborted at wait", e);
+				}
+			} else {
+				messageLog.onIntervalInsufficient(i - 1, durationPrevious, messageIntervalMs);
+			}
+			t = System.currentTimeMillis();
 			ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
-			log.debug("Producer send", "timestamp", record.key());
+			log.debug("Producer send", "key", record.key(), "afterWait", wait);
 			Future<RecordMetadata> producing = producer.send(record);
 			RecordMetadata metadata = waitForAck(producing);
 			log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
@@ -79,8 +102,6 @@ public class ProducerConsumerRun {
 				messageLog.onConsumed(r);
 			}
 		}
-		producer.close();
-		consumer.close();
 	}
 
 	private RecordMetadata waitForAck(Future<RecordMetadata> producing) {

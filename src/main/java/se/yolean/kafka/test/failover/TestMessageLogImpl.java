@@ -1,10 +1,6 @@
 package se.yolean.kafka.test.failover;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -16,6 +12,8 @@ import com.github.structlog4j.SLoggerFactory;
 public class TestMessageLogImpl
 	extends LinkedList<TestMessage>
 	implements TestMessageLog {
+	
+	private static final long serialVersionUID = 1L;
 	
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 
@@ -38,6 +36,11 @@ public class TestMessageLogImpl
 	@Override
 	public void onConsumed(ConsumerRecord<String, String> r) {
 		log.debug("TODO verify consumed");
+	}
+
+	@Override
+	public void onIntervalInsufficient(int i, long actualLoopDuration, int targetInterval) {
+		log.warn("Interval insufficient", "index", i, "duration", actualLoopDuration, "target", targetInterval);
 	}
 	
 }
