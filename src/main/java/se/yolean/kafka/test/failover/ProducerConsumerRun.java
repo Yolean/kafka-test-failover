@@ -21,8 +21,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import com.github.structlog4j.ILogger;
 import com.github.structlog4j.SLoggerFactory;
 
+import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
-import se.yolean.kafka.test.failover.metrics.Metrics;
+import se.yolean.kafka.test.failover.analytics.TestMessageLog;
 
 public class ProducerConsumerRun {
 
@@ -51,8 +52,11 @@ public class ProducerConsumerRun {
 	@Inject
 	private TestMessageLog messageLog;
 
-	@Inject
-	private Metrics metrics;
+	public final Histogram iterationLatency = Histogram.build().name("iteration_latency_ms")
+			.help("Time taken for each test loop, excluding initial wait").register();
+
+	final Counter iterations = Counter.build().name("iterations").help("Test loop iterations started so far")
+			.register();
 
 	/**
 	 * @param runId
@@ -83,6 +87,7 @@ public class ProducerConsumerRun {
 
 		long t = System.currentTimeMillis();
 		for (int i = 0; i < messagesMax; i++) {
+			iterations.inc();
 			long durationPrevious = System.currentTimeMillis() - t;
 			long wait = messageIntervalMs - durationPrevious;
 			if (wait > 0) {
@@ -96,7 +101,7 @@ public class ProducerConsumerRun {
 			}
 
 			t = System.currentTimeMillis();
-			Histogram.Timer iterationTimer = metrics.iterationLatency.startTimer();
+			Histogram.Timer iterationTimer = iterationLatency.startTimer();
 			try {
 				ProducerRecord<String, String> record = messageLog.createNext(runId, i, topic);
 				log.debug("Producer send", "key", record.key(), "afterWait", wait);

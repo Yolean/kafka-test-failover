@@ -1,4 +1,4 @@
-package se.yolean.kafka.test.failover.metrics;
+package se.yolean.kafka.test.failover.analytics;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

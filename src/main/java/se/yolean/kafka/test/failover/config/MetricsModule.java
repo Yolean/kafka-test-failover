@@ -1,19 +1,23 @@
 package se.yolean.kafka.test.failover.config;
 
-import org.apache.kafka.common.metrics.Metrics;
+import java.io.IOException;
 
 import com.google.inject.AbstractModule;
 
-import se.yolean.kafka.test.failover.TestMessageLog;
-import se.yolean.kafka.test.failover.metrics.TestMessageLogImpl;
+import io.prometheus.client.exporter.HTTPServer;
 
 public class MetricsModule extends AbstractModule {
 
+	public static final int PROMETHEUS_EXPORTER_PORT = 5000;
+	
 	@Override
 	protected void configure() {
-		bind(Metrics.class).asEagerSingleton();
-		
-		bind(TestMessageLog.class).to(TestMessageLogImpl.class);
+		int exporterPort = PROMETHEUS_EXPORTER_PORT;
+		try {
+			bind(HTTPServer.class).toInstance(new HTTPServer(exporterPort));
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to start metrics exporter on port " + exporterPort, e);
+		}
 	}
 
 }

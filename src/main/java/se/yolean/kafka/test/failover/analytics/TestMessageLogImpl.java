@@ -1,4 +1,4 @@
-package se.yolean.kafka.test.failover.metrics;
+package se.yolean.kafka.test.failover.analytics;
 
 import java.util.LinkedList;
 
@@ -11,8 +11,8 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import com.github.structlog4j.ILogger;
 import com.github.structlog4j.SLoggerFactory;
 
+import io.prometheus.client.Gauge;
 import se.yolean.kafka.test.failover.RunId;
-import se.yolean.kafka.test.failover.TestMessageLog;
 
 public class TestMessageLogImpl
 	extends LinkedList<TestMessage>
@@ -22,9 +22,12 @@ public class TestMessageLogImpl
 	
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 	
-	@Inject
-	private Metrics metrics;
+	final Gauge unseenSentMessages = Gauge.build().name("unseen_sent_messages")
+			.help("Messages created that haven't been seen consumed").register();
 
+	final Gauge unseenAckdMessages = Gauge.build().name("unseen_ackd_messages")
+			.help("Messaced produced+acked that haven't been seen consumed").register();	
+	
 	public TestMessage createNext(RunId runId, int i) {
 		return new TestMessage(runId, i);
 	}
@@ -33,7 +36,7 @@ public class TestMessageLogImpl
 	public ProducerRecord<String, String> createNext(RunId runId, int i, String topic) {
 		TestMessage msg = createNext(runId, i);
 		this.add(msg);
-		metrics.unseenSentMessages.inc();
+		unseenSentMessages.inc();
 		return new ProducerRecord<String, String>(topic, msg.getKey(), msg.getMessage());
 	}
 
