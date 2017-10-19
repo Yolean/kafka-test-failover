@@ -14,4 +14,10 @@ public class RunIdTest {
 		assertTrue(id1.toString().length() > 4);
 	}
 
+	@Test
+	public void testAppId() {
+		RunId id2 = new RunId("TEST");
+		assertTrue(id2.toString().startsWith("TEST"));
+	}
+
 }

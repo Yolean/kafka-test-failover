@@ -15,9 +15,11 @@ public class App {
 	}
 
 	public static void main(String[] args) {
-		Injector injector = Guice.createInjector(new ConfigModule(), new MetricsModule(), new AppModule());
+		ConfigModule configModule = new ConfigModule();
+		Injector injector = Guice.createInjector(configModule, new MetricsModule(), new AppModule());
 
-		RunId runId = new RunId();
+		String appId = configModule.getConf("KEY_PREFIX", "KT");
+		RunId runId = new RunId(appId);
 
 		ProducerConsumerRun run = injector.getInstance(ProducerConsumerRun.class);
 		try {

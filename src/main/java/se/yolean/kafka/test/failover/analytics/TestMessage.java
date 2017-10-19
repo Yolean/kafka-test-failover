@@ -12,13 +12,17 @@ import se.yolean.kafka.test.failover.RunId;
  */
 public class TestMessage {
 
+	public static final int LENGTH = 9;
+
+	private static final String MSG_COUNTER_FORMAT = "%0" + LENGTH + "d";
+
 	private static final String MSG_ATTRIBUTE_SEPARATOR = "/";
-	
+
 	private static final DateFormat FORMAT_HUMAN_READABLE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	static {
 		FORMAT_HUMAN_READABLE.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
-	
+
 	private RunId runId;
 	private int i;
 	private Date created;
@@ -26,15 +30,15 @@ public class TestMessage {
 	TestMessage(RunId runId, int i) {
 		this(new Date(), runId, i);
 	}
-	
+
 	protected TestMessage(Date created, RunId runId, int i) {
 		this.created = new Date();
 		this.runId = runId;
 		this.i = i;
 	}
-	
+
 	public String getKey() {
-		return runId.toString() + String.format("%09d", i);
+		return runId.toString() + String.format(MSG_COUNTER_FORMAT, i);
 	}
 
 	@Override
@@ -50,7 +54,7 @@ public class TestMessage {
 	public String getMessage() {
 		return created.getTime() + MSG_ATTRIBUTE_SEPARATOR + FORMAT_HUMAN_READABLE.format(created);
 	}
-	
+
 	static Date getMessageCreated(String message) {
 		if (message == null) {
 			throw new IllegalArgumentException("Got null message");
@@ -67,5 +71,5 @@ public class TestMessage {
 	static boolean isSameRun(RunId runId, String key) {
 		return key != null && key.startsWith(runId.toString());
 	}
-	
+
 }
