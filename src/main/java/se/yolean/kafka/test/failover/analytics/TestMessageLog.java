@@ -10,7 +10,7 @@ import se.yolean.kafka.test.failover.ConsistencyFatalError;
  * Doesn't communicate with Kafka, but understands the API enough to verify
  * message consistency.
  */
-public interface TestMessageLog extends Iterable<TestMessage> {
+public interface TestMessageLog {
 
 	// TestMessage createNext(int i);
 

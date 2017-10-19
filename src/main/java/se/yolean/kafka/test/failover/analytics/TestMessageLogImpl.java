@@ -1,6 +1,7 @@
 package se.yolean.kafka.test.failover.analytics;
 
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -14,9 +15,7 @@ import io.prometheus.client.Gauge.Timer;
 import se.yolean.kafka.test.failover.ConsistencyFatalError;
 import se.yolean.kafka.test.failover.RunId;
 
-public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestMessageLog {
-
-	private static final long serialVersionUID = 1L;
+public class TestMessageLogImpl implements TestMessageLog {
 
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 
@@ -31,6 +30,9 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 
 	static final Gauge pendingMessages = Gauge.build().name("pending_messages")
 			.help("Messages produced but not yet consumed").register();
+	
+	private Map<Integer,TestMessage> byIndex = new HashMap<Integer,TestMessage>();
+	private Map<String,TestMessage> byKey = new HashMap<String,TestMessage>();
 	
 	private final RunId runId;
 
@@ -47,11 +49,9 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 
 	@Override
 	public ProducerRecord<String, String> createNext(int i, String topic) {
-		if (this.size() != i) {
-			throw new IllegalStateException("Can't happen, right?");
-		}
 		TestMessage msg = createNext(i);
-		this.add(msg);
+		byIndex.put(i, msg);
+		byKey.put(msg.getKey(), msg);
 		unseenSentMessages.inc();
 		lastCreate = i;
 		lastTimer = produceAckLatency.startTimer();
@@ -66,7 +66,8 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 			throw new ConsistencyFatalError("Expected an ack for every message");
 		}
 		lastTimer.setDuration();
-		this.get(i).setProduced(metadata.partition(), metadata.offset(), metadata.timestamp());
+		byIndex.get(i).setProduced(metadata.partition(), metadata.offset(), metadata.timestamp());
+		byIndex.remove(i);
 	}
 
 	@Override
@@ -77,6 +78,12 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 			return;
 		}
 		unseenSentMessages.dec();
+		TestMessage msg = byKey.get(r.key());
+		if (msg == null) {
+			log.error("Unrecognized message, or message already consumed", "key", r.key(), "offset", r.offset(), "timestamp", r.timestamp());
+			return;
+		}
+		byKey.remove(r.key());
 	}
 
 }
