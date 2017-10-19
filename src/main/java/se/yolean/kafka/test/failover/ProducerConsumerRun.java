@@ -39,6 +39,10 @@ public class ProducerConsumerRun {
 	private int messageIntervalMs;
 
 	@Inject
+	@Named("config:ackTimeoutMs")
+	private int ackTimeoutMs;
+
+	@Inject
 	@Named("producerDefaults")
 	private Properties producerProps;
 
@@ -50,11 +54,17 @@ public class ProducerConsumerRun {
 	@Named("config:topic")
 	private String topic;
 
-	public final Histogram iterationLatency = Histogram.build().name("iteration_latency_ms")
+	static final Histogram iterationLatency = Histogram.build().name("iteration_latency_ms")
 			.help("Time taken for each test loop, excluding initial wait").register();
 
-	final Counter iterations = Counter.build().name("iterations").help("Test loop iterations started so far")
+	static final Counter iterations = Counter.build().name("iterations").help("Test loop iterations started so far")
 			.register();
+
+	static final Counter iterationsDelayed = Counter.build().name("iterations_delayed")
+			.help("Test loop iterations that failed to complete within the configured interval").register();
+
+	static final Counter acksMissedTimeout = Counter.build().name("acks_missed_timeout")
+			.help("Produce calls that failed to get an ack within the configured timeout").register();
 
 	/**
 	 * @param runId
@@ -68,10 +78,10 @@ public class ProducerConsumerRun {
 				producerProps.getProperty("bootstrap.servers"));
 
 		TestMessageLog messageLog = new TestMessageLogImpl(runId);
-		
+
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
 		Producer<String, String> producer = new KafkaProducer<>(producerProps);
-		
+
 		try {
 			start(messageLog, consumer, producer);
 		} finally {
@@ -97,7 +107,9 @@ public class ProducerConsumerRun {
 					throw new RuntimeException("Got aborted at wait", e);
 				}
 			} else {
-				messageLog.onIntervalInsufficient(i - 1, durationPrevious, messageIntervalMs);
+				iterationsDelayed.inc();
+				log.warn("Interval insufficient", "index", i, "duration", durationPrevious, "target",
+						messageIntervalMs);
 			}
 
 			t = System.currentTimeMillis();
@@ -125,11 +137,10 @@ public class ProducerConsumerRun {
 	}
 
 	private RecordMetadata waitForAck(Future<RecordMetadata> producing) {
-		int timeout = 100;
 		// block while sending
 		final RecordMetadata metadata;
 		try {
-			metadata = producing.get(timeout, TimeUnit.MILLISECONDS);
+			metadata = producing.get(ackTimeoutMs, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			log.error("Got interrupted (probably not by Kafka) while waiting for ack", e);
 			throw new ConsistencyFatalError(e);
@@ -137,11 +148,13 @@ public class ProducerConsumerRun {
 			log.error("Something must have gone wrong while producing", e);
 			throw new ConsistencyFatalError(e);
 		} catch (TimeoutException e) {
-			log.error("Failed to get an ack within", "milliseconds", timeout, e);
+			log.error("Failed to get an ack within", "milliseconds", ackTimeoutMs, e);
+			acksMissedTimeout.inc();
+			// TODO we most likely don't want to exit here, can we log this and proceed?
 			throw new ConsistencyFatalError(e);
 		}
 		if (metadata == null) {
-			throw new RuntimeException("Failed with reason unkown to get ack for message " + producing);
+			throw new ConsistencyFatalError("Failed with reason unkown to get ack for message " + producing);
 		}
 		return metadata;
 	}

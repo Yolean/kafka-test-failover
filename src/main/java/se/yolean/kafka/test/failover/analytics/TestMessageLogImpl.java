@@ -19,19 +19,19 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 
-	final Gauge unseenSentMessages = Gauge.build().name("unseen_sent_messages")
+	static final Gauge unseenSentMessages = Gauge.build().name("unseen_sent_messages")
 			.help("Messages created that haven't been seen consumed").register();
 
-	final Gauge unseenAckdMessages = Gauge.build().name("unseen_ackd_messages")
+	static final Gauge unseenAckdMessages = Gauge.build().name("unseen_ackd_messages")
 			.help("Messaced produced+acked that haven't been seen consumed").register();
 
-	final Gauge produceAckLatency = Gauge.build().name("produce_ack_latency")
+	static final Gauge produceAckLatency = Gauge.build().name("produce_ack_latency")
 			.help("The time it took to get last ack").register();
 
-	final Gauge produceConsumeLatency = Gauge.build().name("produce_consume_latency")
+	static final Gauge produceConsumeLatency = Gauge.build().name("produce_consume_latency")
 			.help("The time it took from send to receive of last successful message").register();
 
-	final Gauge pendingMessages = Gauge.build().name("pending_messages")
+	static final Gauge pendingMessages = Gauge.build().name("pending_messages")
 			.help("Messages produced but not yet consumed").register();
 
 	private RecordMetadata lastProducerAck = null;
@@ -77,11 +77,6 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 		}
 		unseenSentMessages.dec();
 		unseenAckdMessages.dec();
-	}
-
-	@Override
-	public void onIntervalInsufficient(int i, long durationPrevious, int targetIntervalMs) {
-		log.warn("Interval insufficient", "index", i, "duration", durationPrevious, "target", targetIntervalMs);
 	}
 
 }

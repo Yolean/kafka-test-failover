@@ -30,6 +30,4 @@ public interface TestMessageLog extends Iterable<TestMessage> {
 	 */
 	void onConsumed(ConsumerRecord<String, String> r);
 
-	void onIntervalInsufficient(int i, long durationPrevious, int targetIntervalMs);
-
 }
