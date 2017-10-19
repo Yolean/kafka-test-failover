@@ -60,6 +60,8 @@ public class ConfigModule extends AbstractModule {
 		bind(Integer.class).annotatedWith(Names.named("config:ackTimeoutMs"))
 				.toInstance(getConf("ACK_TIMEOUT_MS", 100));
 
+		bind(String.class).annotatedWith(Names.named("config:acks")).toInstance(getConf("ACKS", "all"));
+
 		bind(Properties.class).annotatedWith(Names.named("producerDefaults"))
 				.toProvider(ProducerDefaultPropsProvider.class);
 		bind(Properties.class).annotatedWith(Names.named("consumerDefaults"))

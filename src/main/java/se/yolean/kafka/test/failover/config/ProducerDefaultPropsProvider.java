@@ -9,10 +9,13 @@ import javax.inject.Provider;
 public class ProducerDefaultPropsProvider implements Provider<Properties> {
 
 	private String bootstrap;
+	private String acks;
 
 	@Inject
-	public ProducerDefaultPropsProvider(@Named("config:bootstrap") String bootstrap) {
+	public ProducerDefaultPropsProvider(@Named("config:bootstrap") String bootstrap, 
+			@Named("config:acks") String acks) {
 		this.bootstrap = bootstrap;
+		this.acks = acks;
 	}
 	
 	@Override
@@ -20,7 +23,7 @@ public class ProducerDefaultPropsProvider implements Provider<Properties> {
 		// https://kafka.apache.org/0110/javadoc/index.html?org/apache/kafka/clients/producer/KafkaProducer.html
 		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrap);
-		props.put("acks", "all");
+		props.put("acks", acks);
 		props.put("retries", 0);
 		props.put("batch.size", 16384);
 		props.put("linger.ms", 1);
