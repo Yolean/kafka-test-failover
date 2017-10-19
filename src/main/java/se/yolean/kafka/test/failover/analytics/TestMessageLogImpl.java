@@ -10,6 +10,7 @@ import com.github.structlog4j.ILogger;
 import com.github.structlog4j.SLoggerFactory;
 
 import io.prometheus.client.Gauge;
+import io.prometheus.client.Gauge.Timer;
 import se.yolean.kafka.test.failover.ConsistencyFatalError;
 import se.yolean.kafka.test.failover.RunId;
 
@@ -22,9 +23,6 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 	static final Gauge unseenSentMessages = Gauge.build().name("unseen_sent_messages")
 			.help("Messages created that haven't been seen consumed").register();
 
-	static final Gauge unseenAckdMessages = Gauge.build().name("unseen_ackd_messages")
-			.help("Messaced produced+acked that haven't been seen consumed").register();
-
 	static final Gauge produceAckLatency = Gauge.build().name("produce_ack_latency")
 			.help("The time it took to get last ack").register();
 
@@ -34,9 +32,10 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 	static final Gauge pendingMessages = Gauge.build().name("pending_messages")
 			.help("Messages produced but not yet consumed").register();
 
-	private RecordMetadata lastProducerAck = null;
-
 	private final RunId runId;
+
+	int lastCreate = -1;
+	Timer lastTimer = null;
 
 	public TestMessageLogImpl(RunId runId) {
 		this.runId = runId;
@@ -51,21 +50,19 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 		TestMessage msg = createNext(i);
 		this.add(msg);
 		unseenSentMessages.inc();
+		lastCreate = i;
+		lastTimer = produceAckLatency.startTimer();
 		return new ProducerRecord<String, String>(topic, msg.getKey(), msg.getMessage());
 	}
 
-	/**
-	 * @deprecated Needs work to support multiple concurrent runs
-	 */
 	@Override
-	public void onProducerAckReceived(RecordMetadata metadata) {
-		unseenAckdMessages.inc();
-		if (lastProducerAck != null && metadata.offset() - 1 != lastProducerAck.offset()) {
-			log.error("Producer ack(s) missing?", "offset", metadata.offset(), "lastOffset", lastProducerAck.offset(),
+	public void onProducerAckReceived(int i, RecordMetadata metadata) {
+		if (lastCreate != i) {
+			log.error("Producer ack(s) missing?", "last", lastCreate, "got", i, "offset", metadata.offset(),
 					"timestamp", metadata.timestamp(), "lastTimestamp", metadata.timestamp());
 			throw new ConsistencyFatalError("Expected an ack for every message");
 		}
-		lastProducerAck = metadata;
+		lastTimer.setDuration();
 	}
 
 	@Override
@@ -76,7 +73,6 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 			return;
 		}
 		unseenSentMessages.dec();
-		unseenAckdMessages.dec();
 	}
 
 }

@@ -54,7 +54,7 @@ public class ProducerConsumerRun {
 	@Named("config:topic")
 	private String topic;
 
-	static final Histogram iterationLatency = Histogram.build().name("iteration_latency_ms")
+	static final Histogram iterationLatency = Histogram.build().name("iteration_latency")
 			.help("Time taken for each test loop, excluding initial wait").register();
 
 	static final Counter iterations = Counter.build().name("iterations").help("Test loop iterations started so far")
@@ -122,7 +122,7 @@ public class ProducerConsumerRun {
 				log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
 						metadata.offset(), "timestamp", metadata.timestamp(), "keySize",
 						metadata.serializedKeySize(), "valueSize", metadata.serializedValueSize());
-				messageLog.onProducerAckReceived(metadata);
+				messageLog.onProducerAckReceived(i, metadata);
 
 				ConsumerRecords<String, String> consumed = consumer.poll(100);
 				for (ConsumerRecord<String, String> r : consumed) {

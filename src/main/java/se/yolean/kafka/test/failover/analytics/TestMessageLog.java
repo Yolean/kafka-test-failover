@@ -17,11 +17,12 @@ public interface TestMessageLog extends Iterable<TestMessage> {
 	ProducerRecord<String, String> createNext(int i, String topic);
 
 	/**
+	 * @param i The message's index at {@link #createNext(int, String)}
 	 * @throws ConsistencyFatalError
 	 *             On consistencies that are too odd/big to be represented by
 	 *             metrics
 	 */
-	void onProducerAckReceived(RecordMetadata recordMetadata);
+	void onProducerAckReceived(int i, RecordMetadata recordMetadata);
 
 	/**
 	 * @throws ConsistencyFatalError
