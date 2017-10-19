@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.prometheus.client.Histogram;
 import se.yolean.kafka.test.failover.RunId;
 
 /**
@@ -22,6 +23,10 @@ public class TestMessage {
 	static {
 		FORMAT_HUMAN_READABLE.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
+
+	static final Histogram timestampDiff = Histogram.build().name("timestamp_diff")
+			.help("Time between the local timestamp at message create and kafka's timestamp on the same message (ms)")
+			.register();
 
 	private RunId runId;
 	private int i;
@@ -53,6 +58,10 @@ public class TestMessage {
 
 	public String getMessage() {
 		return created.getTime() + MSG_ATTRIBUTE_SEPARATOR + FORMAT_HUMAN_READABLE.format(created);
+	}
+
+	void setProduced(int partition, long offset, long timestamp) {
+		timestampDiff.observe(timestamp - created.getTime());
 	}
 
 	static Date getMessageCreated(String message) {

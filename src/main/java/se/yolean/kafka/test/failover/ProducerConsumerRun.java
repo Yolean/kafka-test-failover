@@ -120,8 +120,8 @@ public class ProducerConsumerRun {
 				Future<RecordMetadata> producing = producer.send(record);
 				RecordMetadata metadata = waitForAck(producing);
 				log.debug("Got producer ack", "topic", metadata.topic(), "partition", metadata.partition(), "offset",
-						metadata.offset(), "timestamp", metadata.timestamp(), "keySize",
-						metadata.serializedKeySize(), "valueSize", metadata.serializedValueSize());
+						metadata.offset(), "timestamp", metadata.timestamp(), "keySize", metadata.serializedKeySize(),
+						"valueSize", metadata.serializedValueSize());
 				messageLog.onProducerAckReceived(i, metadata);
 
 				ConsumerRecords<String, String> consumed = consumer.poll(100);

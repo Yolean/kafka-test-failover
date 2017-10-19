@@ -31,7 +31,7 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 
 	static final Gauge pendingMessages = Gauge.build().name("pending_messages")
 			.help("Messages produced but not yet consumed").register();
-
+	
 	private final RunId runId;
 
 	int lastCreate = -1;
@@ -47,6 +47,9 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 
 	@Override
 	public ProducerRecord<String, String> createNext(int i, String topic) {
+		if (this.size() != i) {
+			throw new IllegalStateException("Can't happen, right?");
+		}
 		TestMessage msg = createNext(i);
 		this.add(msg);
 		unseenSentMessages.inc();
@@ -63,6 +66,7 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 			throw new ConsistencyFatalError("Expected an ack for every message");
 		}
 		lastTimer.setDuration();
+		this.get(i).setProduced(metadata.partition(), metadata.offset(), metadata.timestamp());
 	}
 
 	@Override
