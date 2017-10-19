@@ -25,6 +25,15 @@ public class TestMessageLogImpl extends LinkedList<TestMessage> implements TestM
 	final Gauge unseenAckdMessages = Gauge.build().name("unseen_ackd_messages")
 			.help("Messaced produced+acked that haven't been seen consumed").register();
 
+	final Gauge produceAckLatency = Gauge.build().name("produce_ack_latency")
+			.help("The time it took to get last ack").register();
+
+	final Gauge produceConsumeLatency = Gauge.build().name("produce_consume_latency")
+			.help("The time it took from send to receive of last successful message").register();
+
+	final Gauge pendingMessages = Gauge.build().name("pending_messages")
+			.help("Messages produced but not yet consumed").register();
+
 	private RecordMetadata lastProducerAck = null;
 
 	private final RunId runId;
