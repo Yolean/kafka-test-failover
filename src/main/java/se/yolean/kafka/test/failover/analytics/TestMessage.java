@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.prometheus.client.Gauge.Timer;
 import io.prometheus.client.Histogram;
 import se.yolean.kafka.test.failover.RunId;
 
@@ -31,6 +32,8 @@ public class TestMessage {
 	private RunId runId;
 	private int i;
 	private Date created;
+
+	private Timer produceConsumeTimer;
 
 	TestMessage(RunId runId, int i) {
 		this(new Date(), runId, i);
@@ -75,6 +78,14 @@ public class TestMessage {
 		String created = message.substring(0, sep);
 		long c = Long.parseLong(created);
 		return new Date(c);
+	}
+
+	void setProduceConsumeTimer(Timer timer) {
+		this.produceConsumeTimer = timer;
+	}
+
+	Timer getProduceConsumeTimer() {
+		return this.produceConsumeTimer;
 	}
 
 	static boolean isSameRun(RunId runId, String key) {

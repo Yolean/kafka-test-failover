@@ -30,10 +30,10 @@ public class TestMessageLogImpl implements TestMessageLog {
 
 	static final Gauge pendingMessages = Gauge.build().name("pending_messages")
 			.help("Messages produced but not yet consumed").register();
-	
-	private Map<Integer,TestMessage> byIndex = new HashMap<Integer,TestMessage>();
-	private Map<String,TestMessage> byKey = new HashMap<String,TestMessage>();
-	
+
+	private Map<Integer, TestMessage> byIndex = new HashMap<Integer, TestMessage>();
+	private Map<String, TestMessage> byKey = new HashMap<String, TestMessage>();
+
 	private final RunId runId;
 
 	int lastCreate = -1;
@@ -55,6 +55,7 @@ public class TestMessageLogImpl implements TestMessageLog {
 		unseenSentMessages.inc();
 		lastCreate = i;
 		lastTimer = produceAckLatency.startTimer();
+		msg.setProduceConsumeTimer(produceConsumeLatency.startTimer());
 		return new ProducerRecord<String, String>(topic, msg.getKey(), msg.getMessage());
 	}
 
@@ -80,9 +81,11 @@ public class TestMessageLogImpl implements TestMessageLog {
 		unseenSentMessages.dec();
 		TestMessage msg = byKey.get(r.key());
 		if (msg == null) {
-			log.error("Unrecognized message, or message already consumed", "key", r.key(), "offset", r.offset(), "timestamp", r.timestamp());
+			log.error("Unrecognized message, or message already consumed", "key", r.key(), "offset", r.offset(),
+					"timestamp", r.timestamp());
 			return;
 		}
+		msg.getProduceConsumeTimer().setDuration();
 		byKey.remove(r.key());
 	}
 
