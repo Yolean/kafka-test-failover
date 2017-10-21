@@ -28,7 +28,6 @@ RUN set -e; \
   rm -rf /var/lib/apt/lists/*; \
   rm -rf /var/log/dpkg.log /var/log/alternatives.log /var/log/apt
 
-ENTRYPOINT [ \
-  "java", \
-  "-cp", "'/usr/share/java/kafka-test-latency/*:/etc/kafka-test-latency/*'" \
+ENTRYPOINT [ "java", \
+  "-cp", "/usr/share/java/kafka-test-latency/*:/etc/kafka-test-latency/*", \
   "se.yolean.kafka.test.failover.App" ]
