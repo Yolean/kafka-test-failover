@@ -27,3 +27,10 @@ dependencies {
   compile group: 'structlog4j', name: 'structlog4j-api', version: '1.0.0'
   compile group: 'structlog4j', name: 'structlog4j-json', version: '1.0.0'
 }
+
+task copyToLib(type: Copy) {
+    into "$buildDir/libs"
+    from configurations.runtime
+}
+
+build.dependsOn(copyToLib)
