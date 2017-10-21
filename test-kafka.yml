@@ -46,9 +46,9 @@ spec:
         - --topic
         -   test-produce-consume-latency
         - --partitions
-        -   "3"
+        -   "1"
         - --replication-factor
-        -   "3"
+        -   "1"
       restartPolicy: Never
 ---
 apiVersion: apps/v1beta1
@@ -76,10 +76,12 @@ spec:
       - name: testcase
         image: solsson/kafka-test-produce-consume-latency
         imagePullPolicy: Never
-        command:
-        - /bin/bash
-        - -e
-        - /test/setup.sh
+        ports:
+        - name: metrics
+          containerPort: 5000
+        env:
+        - name: BOOTSTRAP
+          value: kafka-0.broker.kafka.svc.cluster.local:9092
         readinessProbe:
           exec:
             command:
