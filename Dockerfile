@@ -4,8 +4,8 @@ COPY . /opt/src/kafka-test-latency
 
 RUN set -e; \
   export DEBIAN_FRONTEND=noninteractive; \
-  runDeps=''; \
-  buildDeps='curl ca-certificates unzip'; \
+  runDeps='curl'; \
+  buildDeps='ca-certificates unzip'; \
   apt-get update && apt-get install -y $runDeps $buildDeps --no-install-recommends; \
   \
   cd /opt; \
