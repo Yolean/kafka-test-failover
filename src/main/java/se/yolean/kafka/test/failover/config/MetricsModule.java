@@ -8,11 +8,15 @@ import io.prometheus.client.exporter.HTTPServer;
 
 public class MetricsModule extends AbstractModule {
 
-	public static final int PROMETHEUS_EXPORTER_PORT = 5000;
-	
+	private int prometheusExporterPort;
+
+	public MetricsModule(int prometheusExporterPort) {
+		this.prometheusExporterPort = prometheusExporterPort;
+	}
+
 	@Override
 	protected void configure() {
-		int exporterPort = PROMETHEUS_EXPORTER_PORT;
+		int exporterPort = prometheusExporterPort;
 		try {
 			bind(HTTPServer.class).toInstance(new HTTPServer(exporterPort));
 		} catch (IOException e) {
