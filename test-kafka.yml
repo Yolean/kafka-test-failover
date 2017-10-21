@@ -15,8 +15,8 @@ data:
     exec >> /tmp/testlog
     exec 2>&1
 
-    echo "At $(date -u --iso-8601='ns'), replace this test using:"
-    echo " kubectl -n $POD_NAMESPACE cp `basename "$0"` $POD_NAME:$0"
+    # TODO should we assert some value an threshold?
+    curl -SLs -f http://localhost:5000/metrics > /dev/null
 
     exit 0
 
