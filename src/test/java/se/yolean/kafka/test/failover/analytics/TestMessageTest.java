@@ -20,7 +20,7 @@ public class TestMessageTest {
 		String message = msg.getMessage();
 		Date created = TestMessage.getMessageCreated(message);
 		long diff = created.getTime() - testTime.getTime();
-		assertTrue("test=" + testTime.getTime() + ",message=" + created.getTime() + ",diff=" + diff, diff < 100);
+		assertTrue("test=" + testTime.getTime() + ",message=" + created.getTime() + ",diff=" + diff, diff < 1000);
 		assertTrue(diff >= 0);
 		assertTrue(TestMessage.isSameRun(runId, msg.getKey()));
 		assertFalse(TestMessage.isSameRun(new RunId(), msg.getKey()));
