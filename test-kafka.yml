@@ -1,0 +1,103 @@
+---
+kind: ConfigMap
+metadata:
+  name: kafka-test-produce-consume-latency
+  namespace: test-kafka
+apiVersion: v1
+data:
+
+  setup.sh: |-
+    touch /tmp/testlog
+
+    tail -f /tmp/testlog
+
+  test.sh: |-
+    exec >> /tmp/testlog
+    exec 2>&1
+
+    echo "At $(date -u --iso-8601='ns'), replace this test using:"
+    echo " kubectl -n $POD_NAMESPACE cp `basename "$0"` $POD_NAME:$0"
+
+    exit 0
+
+  quit-on-nonzero-exit.sh: |-
+    exec >> /tmp/testlog
+    exec 2>&1
+
+    exit 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-produce-consume-latency
+  namespace: test-kafka
+spec:
+  template:
+    spec:
+      containers:
+      - name: topic-create
+        image: solsson/kafka:0.11.0.1@sha256:1b6b25ea30a93d0d9dc69eb4531d7246d72df4015bbb5baa5bb551a77011bed5
+        command:
+        - ./bin/kafka-topics.sh
+        - --zookeeper
+        -   zookeeper.kafka.svc.cluster.local:2181
+        - --create
+        - --if-not-exists
+        - --topic
+        -   test-produce-consume-latency
+        - --partitions
+        -   "3"
+        - --replication-factor
+        -   "3"
+      restartPolicy: Never
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: test-produce-consume-latency
+  namespace: test-kafka
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        test-target: kube-test
+        test-type: readiness
+        # for example:
+        # readonly - can be used in production
+        # isolated - read/write but in a manner that does not affect other services
+        # load - unsuitable for production because it uses significant resources
+        # chaos - unsuitable for production because it injects failure modes
+        #test-use:
+    spec:
+      containers:
+      - name: testcase
+        image: solsson/kafka-test-produce-consume-latency
+        imagePullPolicy: Never
+        command:
+        - /bin/bash
+        - -e
+        - /test/setup.sh
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -e
+            - /test/test.sh
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -e
+            - /test/quit-on-nonzero-exit.sh
+        volumeMounts:
+        - name: config
+          mountPath: /test
+      volumes:
+      - name: config
+        configMap:
+          name: kafka-test-produce-consume-latency
