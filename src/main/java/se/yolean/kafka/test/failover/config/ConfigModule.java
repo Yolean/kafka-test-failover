@@ -16,7 +16,7 @@ public class ConfigModule extends AbstractModule {
 	 */
 	private static final int DEFAULT_MESSAGES_MAX = 999999999;
 
-	public static final String DEFAULT_BOOTSTRAP_SERVERS = "192.168.99.100:32400,192.168.99.100:32401,192.168.99.100:32402";
+	public static final String DEFAULT_BOOTSTRAP_SERVERS = "192.168.99.102:32400,192.168.99.102:32401,192.168.99.102:32402";
 	public static final String DEFAULT_TOPIC = "test-produce-consume-latency";
 
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
