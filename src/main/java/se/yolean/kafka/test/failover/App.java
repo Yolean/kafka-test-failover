@@ -24,8 +24,13 @@ public class App {
 
 	public static void main(String[] args) {
 		ConfigModule configModule = new ConfigModule();
+		int serverPort = configModule.getConf("PORT", DEFAULT_PROMETHEUS_EXPORTER_PORT);
 		Injector injector = Guice.createInjector(configModule, new AppModule(),
-				new MetricsModule(configModule.getConf("PORT", DEFAULT_PROMETHEUS_EXPORTER_PORT)));
+				new MetricsModule(serverPort));
+
+		HTTPServer server = injector.getInstance(HTTPServer.class);
+		if (server == null) throw new IllegalStateException("No prometheus export server found");
+		log.info("Prometheus export server running", "port", serverPort, "instance", server);
 
 		String appId = configModule.getConf("KEY_PREFIX", "KT");
 
@@ -41,10 +46,7 @@ public class App {
 				t.start();
 			}
 		} finally {
-			HTTPServer server = injector.getInstance(HTTPServer.class);
-			if (server != null) {
-				server.stop();
-			}
+			server.stop();
 		}
 	}
 
