@@ -26,7 +26,7 @@ import io.prometheus.client.Histogram;
 import se.yolean.kafka.test.failover.analytics.TestMessageLog;
 import se.yolean.kafka.test.failover.analytics.TestMessageLogImpl;
 
-public class ProducerConsumerRun {
+public class ProducerConsumerRun implements Runnable {
 
 	private ILogger log = SLoggerFactory.getLogger(this.getClass());
 
@@ -73,7 +73,7 @@ public class ProducerConsumerRun {
 	 *             On consistencies that are too odd/big to be represented by
 	 *             metrics
 	 */
-	public void start(RunId runId) throws ConsistencyFatalError {
+	void start(RunId runId) throws ConsistencyFatalError {
 		log.info("Starting", "runId", runId, "topic", topic, "bootstrap",
 				producerProps.getProperty("bootstrap.servers"));
 
@@ -157,6 +157,22 @@ public class ProducerConsumerRun {
 			throw new ConsistencyFatalError("Failed with reason unkown to get ack for message " + producing);
 		}
 		return metadata;
+	}
+
+	// --- to be able to run as thread ---
+
+	private RunId runId = null;
+
+	public void setRunId(RunId runId) {
+		if (this.runId != null) throw new IllegalStateException("runs can't be reused");
+		if (runId == null) throw new IllegalArgumentException("runId is required");
+		this.runId = runId;
+	}
+
+	@Override
+	public void run() {
+		if (runId == null) throw new IllegalStateException("setRunId hasn't been called");
+		start(runId);
 	}
 
 }
