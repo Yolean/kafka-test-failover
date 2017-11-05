@@ -1,7 +1,7 @@
 ---
 kind: ConfigMap
 metadata:
-  name: kafka-test-produce-consume-latency
+  name: client-experience
   namespace: test-kafka
 apiVersion: v1
 data:
@@ -45,7 +45,7 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-produce-consume-latency
+  name: test-client-experience
   namespace: test-kafka
 spec:
   template:
@@ -60,7 +60,7 @@ spec:
         - --create
         - --if-not-exists
         - --topic
-        -   test-produce-consume-latency
+        -   test-client-experience
         - --partitions
         -   "1"
         - --replication-factor
@@ -70,7 +70,7 @@ spec:
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: test-produce-consume-latency
+  name: test-client-experience
   namespace: test-kafka
 spec:
   replicas: 1
@@ -94,13 +94,15 @@ spec:
     spec:
       containers:
       - name: testcase
-        image: solsson/kafka-test-latency@sha256:3e1ccd96ecd3f6788a6772a00b3fc075eac89a668b72cc25c620bd2c29e19274
+        image: solsson/kafka-test-latency@sha256:d16a9814f694628c32a261ac025e03341506c6c0857513928b45e073663a18a6
         ports:
         - name: metrics
           containerPort: 5000
         env:
         - name: BOOTSTRAP
           value: kafka-0.broker.kafka.svc.cluster.local:9092
+        - name: TOPIC
+          value: test-client-experience
         readinessProbe:
           exec:
             command:
@@ -121,4 +123,4 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: kafka-test-produce-consume-latency
+          name: client-experience
