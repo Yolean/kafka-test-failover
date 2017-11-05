@@ -94,7 +94,7 @@ spec:
     spec:
       containers:
       - name: testcase
-        image: solsson/kafka-test-latency
+        image: solsson/kafka-test-latency@sha256:3e1ccd96ecd3f6788a6772a00b3fc075eac89a668b72cc25c620bd2c29e19274
         ports:
         - name: metrics
           containerPort: 5000
