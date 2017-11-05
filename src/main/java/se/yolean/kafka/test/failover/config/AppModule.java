@@ -1,16 +1,17 @@
 package se.yolean.kafka.test.failover.config;
 
-import com.google.inject.AbstractModule;
+import javax.inject.Provider;
 
-import se.yolean.kafka.test.failover.ProducerConsumerRun;
-import se.yolean.kafka.test.failover.analytics.TestMessageLog;
-import se.yolean.kafka.test.failover.analytics.TestMessageLogImpl;
+import com.google.inject.AbstractModule;
+import com.google.inject.name.Names;
 
 public class AppModule extends AbstractModule {
 
+	public final Provider<String> appId = new ConfigValueProvider.Str("KEY_PREFIX", "KT");
+
 	@Override
 	protected void configure() {
-		bind(ProducerConsumerRun.class);
+		bind(String.class).annotatedWith(Names.named("config:appId")).toProvider(appId);
 	}
 
 }

@@ -6,13 +6,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-public class ProducerDefaultPropsProvider implements Provider<Properties> {
+public class ProducerPropsProvider implements Provider<Properties> {
 
 	private String bootstrap;
 	private String acks;
 
 	@Inject
-	public ProducerDefaultPropsProvider(@Named("config:bootstrap") String bootstrap, 
+	public ProducerPropsProvider(@Named("config:bootstrap") String bootstrap, 
 			@Named("config:acks") String acks) {
 		this.bootstrap = bootstrap;
 		this.acks = acks;

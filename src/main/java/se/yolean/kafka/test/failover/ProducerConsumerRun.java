@@ -41,13 +41,17 @@ public class ProducerConsumerRun implements Runnable {
 	@Inject
 	@Named("config:ackTimeoutMs")
 	private int ackTimeoutMs;
+	
+	@Inject
+	@Named("config:consumerPollMs")	
+	private int consumerPollMs;
 
 	@Inject
-	@Named("producerDefaults")
+	@Named("producer")
 	private Properties producerProps;
 
 	@Inject
-	@Named("consumerDefaults")
+	@Named("consumer")
 	private Properties consumerProps;
 
 	@Inject
@@ -124,7 +128,7 @@ public class ProducerConsumerRun implements Runnable {
 						"valueSize", metadata.serializedValueSize());
 				messageLog.onProducerAckReceived(i, metadata);
 
-				ConsumerRecords<String, String> consumed = consumer.poll(100);
+				ConsumerRecords<String, String> consumed = consumer.poll(consumerPollMs);
 				for (ConsumerRecord<String, String> r : consumed) {
 					log.info("consumed", "offset", r.offset(), "timestamp", r.timestamp(), "key", r.key(), "value",
 							r.value());

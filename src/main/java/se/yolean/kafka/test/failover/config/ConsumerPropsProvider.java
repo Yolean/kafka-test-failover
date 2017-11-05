@@ -6,13 +6,28 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-public class ConsumerDefaultPropsProvider implements Provider<Properties> {
+import se.yolean.kafka.test.failover.RunId;
+
+public class ConsumerPropsProvider implements Provider<Properties> {
 
 	private String bootstrap;
+	private RunId runId;
 
 	@Inject
-	public ConsumerDefaultPropsProvider(@Named("config:bootstrap") String bootstrap) {
+	public ConsumerPropsProvider(@Named("config:bootstrap") String bootstrap) {
 		this.bootstrap = bootstrap;
+	}
+	
+	@Inject
+	public void setRunId(RunId runId) {
+		this.runId = runId;
+	}
+	
+	/**
+	 * @return Something that is unique per run, because we didn't design for the consumer group feature.
+	 */
+	private String getConsumerGroupId() {
+		return "kafka-test-failover-" + runId.toString();
 	}
 	
 	@Override
@@ -21,7 +36,7 @@ public class ConsumerDefaultPropsProvider implements Provider<Properties> {
 		// Automatic Offset Committing
 	     Properties props = new Properties();
 	     props.put("bootstrap.servers", bootstrap);
-	     props.put("group.id", "test");
+	     props.put("group.id", getConsumerGroupId());
 	     props.put("enable.auto.commit", "true");
 	     props.put("auto.commit.interval.ms", "1000");
 	     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
