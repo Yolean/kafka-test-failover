@@ -55,7 +55,7 @@ public class ProducerConsumerRun implements Runnable {
 	private String topic;
 
 	static final Histogram iterationLatency = Histogram.build().name("iteration_latency")
-			.help("Time taken for each test loop, excluding initial wait").register();
+			.help("Time taken for each test loop, excluding initial wait (ms)").register();
 
 	static final Counter iterations = Counter.build().name("iterations").help("Test loop iterations started so far")
 			.register();
