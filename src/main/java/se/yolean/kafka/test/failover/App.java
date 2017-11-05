@@ -14,7 +14,7 @@ public class App {
 
 	public static final int DEFAULT_PROMETHEUS_EXPORTER_PORT = 5000;
 
-	public static final int DEFAULT_RUNS = 3;
+	public static final int DEFAULT_RUNS = 1;
 
 	static {
 		com.github.structlog4j.StructLog4J.setFormatter(com.github.structlog4j.json.JsonFormatter.getInstance());
