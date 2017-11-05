@@ -25,29 +25,33 @@ public class App {
 	public static void main(String[] args) {
 		ConfigModule configModule = new ConfigModule();
 		int serverPort = configModule.getConf("PORT", DEFAULT_PROMETHEUS_EXPORTER_PORT);
-		Injector injector = Guice.createInjector(configModule, new AppModule(),
-				new MetricsModule(serverPort));
+		Injector injector = Guice.createInjector(configModule, new AppModule(), new MetricsModule(serverPort));
 
 		HTTPServer server = injector.getInstance(HTTPServer.class);
-		if (server == null) throw new IllegalStateException("No prometheus export server found");
+		if (server == null)
+			throw new IllegalStateException("No prometheus export server found");
 		log.info("Prometheus export server running", "port", serverPort, "instance", server);
 
 		String appId = configModule.getConf("KEY_PREFIX", "KT");
 
 		int runs = DEFAULT_RUNS;
 
-		try {
-			for (int i = 0; i < runs; i++) {
-				RunId runId = new RunId(appId);
-				ProducerConsumerRun run = injector.getInstance(ProducerConsumerRun.class);
-				log.info("New run", "appId", appId, "runId", runId);
-				run.setRunId(runId);
-				Thread t = new Thread(run);
-				t.start();
-			}
-		} finally {
-			server.stop();
+		for (int i = 0; i < runs; i++) {
+			RunId runId = new RunId(appId);
+			ProducerConsumerRun run = injector.getInstance(ProducerConsumerRun.class);
+			log.info("New run", "appId", appId, "runId", runId);
+			run.setRunId(runId);
+			Thread t = new Thread(run);
+			t.start();
 		}
+
+		Thread shutdown = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				server.stop();
+			}
+		});
+		Runtime.getRuntime().addShutdownHook(shutdown);
 	}
 
 }

@@ -17,11 +17,13 @@ public class MetricsModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		int exporterPort = prometheusExporterPort;
+		HTTPServer server;
 		try {
-			bind(HTTPServer.class).toInstance(new HTTPServer(exporterPort));
+			server = new HTTPServer(exporterPort);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to start metrics exporter on port " + exporterPort, e);
 		}
+		bind(HTTPServer.class).toInstance(server);
 	}
 
 }
