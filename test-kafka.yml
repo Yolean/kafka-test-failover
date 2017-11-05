@@ -15,8 +15,24 @@ data:
     exec >> /tmp/testlog
     exec 2>&1
 
-    # TODO should we assert some value an threshold?
-    curl -SLs -f http://localhost:5000/metrics > /dev/null
+    curl -SLs -f http://localhost:5000/metrics > /tmp/lastmetric
+
+    assert_value() {
+      metric=$1
+      op=$2
+      expected=$3
+      line=$(cat /tmp/lastmetric | grep "^$metric")
+      actual=$(echo $line | sed "s/$metric //" | sed 's/\.0//' )
+      if [ ! $actual $op $expected ]; then
+        echo "Failed $metric $op $expected:"
+        echo $line
+        exit 1
+      fi
+    }
+
+    assert_value unseen_sent_messages -le 1
+    assert_value pending_messages -le 1
+    assert_value iterations_delayed -le 0
 
     exit 0
 
