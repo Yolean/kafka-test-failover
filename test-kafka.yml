@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
       - name: testcase
-        image: solsson/kafka-test-latency@sha256:d16a9814f694628c32a261ac025e03341506c6c0857513928b45e073663a18a6
+        image: solsson/kafka-test-latency@sha256:115a1990b4e2de59c8536124b90186fa2d0df113ad0eae1536545d2fbe1ffc33
         ports:
         - name: metrics
           containerPort: 5000
@@ -104,6 +104,8 @@ spec:
           value: kafka-0.broker.kafka.svc.cluster.local:9092
         - name: TOPIC
           value: test-client-experience
+        - name: MESSAGE_INTERVAL
+          value: "500"
         readinessProbe:
           exec:
             command:
