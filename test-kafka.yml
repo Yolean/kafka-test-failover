@@ -30,6 +30,7 @@ data:
       fi
     }
 
+    # in Prometheus this should be monitored as a rate, but that's hard in bash
     assert_value unseen_sent_messages -le 1
     assert_value pending_messages -le 1
     assert_value iterations_delayed -le 0
