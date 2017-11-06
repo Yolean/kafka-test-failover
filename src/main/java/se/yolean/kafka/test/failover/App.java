@@ -30,6 +30,17 @@ public class App {
 			throw new IllegalStateException("No prometheus export server found");
 		log.info("Prometheus export server running", "port", metricsModule.port.get(), "instance", server);
 
+		Thread shutdown = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				server.stop();
+			}
+		});
+		Runtime.getRuntime().addShutdownHook(shutdown);
+
+		UncaughtExceptionHandler runErrorHandler = new UncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler(runErrorHandler);
+
 		String appId = appModule.appId.get();
 
 		int runs = DEFAULT_RUNS;
@@ -43,14 +54,14 @@ public class App {
 			Thread t = new Thread(run);
 			t.start();
 		}
+	}
 
-		Thread shutdown = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				server.stop();
-			}
-		});
-		Runtime.getRuntime().addShutdownHook(shutdown);
+	static class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+		@Override
+		public void uncaughtException(Thread run, Throwable t) {
+			log.error("A run crashed", t);
+			System.exit(1);
+		}
 	}
 
 }
